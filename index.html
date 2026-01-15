@@ -1,0 +1,314 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#070b14" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" href="assets/icon-192.png" />
+  <title>Kitap Kütüphanem</title>
+  <link rel="stylesheet" href="assets/styles.css" />
+</head>
+<body>
+<header class="topbar">
+  <div class="wrap" style="display:flex;justify-content:space-between;gap:14px;align-items:center;">
+    <div class="brand">
+      <div class="logo">K</div>
+      <div>
+        <div class="title">Kitap Kütüphanem</div>
+        <div class="subtitle">Barkod + Dinamik Raflar • Gerçek zamanlı filtre</div>
+      </div>
+    </div>
+    <div class="actions">
+      <button id="btnInstall" class="btn primary" hidden>Yükle</button>
+      <button id="btnExport" class="btn ghost" title="Dışa aktar">⬇️</button>
+      <label class="btn ghost file" title="İçe aktar">⬆️<input id="fileImport" type="file" accept="application/json" /></label>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <!-- HOME -->
+  <section id="pageHome" class="page active">
+    <div class="card">
+      <h2>Hızlı Ekle</h2>
+      <div class="row">
+        <label>
+          <span>ISBN (10/13) veya EAN-13</span>
+          <input id="isbnInput" placeholder="Barkod okut veya yaz…" inputmode="numeric" />
+        </label>
+        <button id="btnScan" class="btn">📷 Barkod Oku</button>
+        <button id="btnFetch" class="btn primary">⚡ Bilgileri Getir</button>
+      </div>
+      <div id="fetchStatus" class="status">Hazır.</div>
+
+      <div class="two">
+        <div class="coverBox">
+          <img id="coverImg" alt="Kapak" />
+          <div class="small" id="coverInfo"></div>
+          <div class="coverActions">
+            <label class="btn file">🖼️ Kapak Yükle<input id="coverUpload" type="file" accept="image/*" /></label>
+            <button id="btnRemoveCover" class="btn ghost">🧹 Kaldır</button>
+          </div>
+        </div>
+
+        <div>
+          <datalist id="shelfList"></datalist>
+
+          <div class="row">
+            <label style="min-width:260px">
+              <span>Başlık</span>
+              <input id="ed_title" placeholder="(otomatik gelir)" />
+            </label>
+            <label style="min-width:260px">
+              <span>Yazar</span>
+              <input id="ed_authors" placeholder="Virgülle ayır" />
+            </label>
+          </div>
+
+          <div class="row">
+            <label>
+              <span>Raf</span>
+              <input id="uc_shelf" list="shelfList" placeholder="Örn: Roman, Kişisel Gelişim..." />
+            </label>
+            <label>
+              <span>Yayınlanma Tarihi</span>
+              <input id="ed_publishedDate" placeholder="YYYY-MM-DD veya YYYY" />
+            </label>
+          </div>
+
+          <div class="row">
+            <label>
+              <span>Yayıncı</span>
+              <input id="ed_publisher" />
+            </label>
+            <label>
+              <span>Dil</span>
+              <input id="ed_language" placeholder="tr/en" />
+            </label>
+          </div>
+
+          <div class="row">
+            <label>
+              <span>Çeviren</span>
+              <input id="ed_translators" placeholder="Virgülle ayır" />
+            </label>
+            <label>
+              <span>Fiyat</span>
+              <input id="uc_price" inputmode="decimal" placeholder="Örn: 199.90" />
+            </label>
+          </div>
+
+          <div class="row">
+            <label>
+              <span>Para Birimi</span>
+              <select id="uc_currency">
+                <option value="TRY" selected>TRY</option>
+                <option value="USD">USD</option>
+                <option value="EUR">EUR</option>
+              </select>
+            </label>
+            <div style="flex:1"></div>
+          </div>
+
+          <div class="row end">
+            <button id="btnSaveQuick" class="btn primary">✅ Kaydet</button>
+            <button id="btnOpenAdd" class="btn">➕ Detay</button>
+          </div>
+
+          <div class="small">Confidence: <span id="ed_confidence">-</span> • Kaynaklar: <span id="ed_sources">-</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="footerSpace"></div>
+  </section>
+
+  <!-- SHELVES -->
+  <section id="pageShelves" class="page">
+    <div class="card">
+      <h2>Raflar</h2>
+      <div class="tabs" id="shelfTabs"></div>
+      <div class="row">
+        <label>
+          <span>Arama</span>
+          <input id="searchInput" placeholder="Başlık / yazar / yayıncı / ISBN" />
+        </label>
+        <button id="btnOpenFilter" class="btn">🧰 Filtre/Sırala</button>
+      </div>
+      <div id="library" class="library" style="margin-top:12px"></div>
+    </div>
+    <div class="footerSpace"></div>
+  </section>
+
+  <!-- SETTINGS -->
+  <section id="pageSettings" class="page">
+    <div class="card">
+      <h2>Ayarlar</h2>
+      <div class="row">
+        <label>
+          <span>Google Books API Key (opsiyonel)</span>
+          <input id="googleApiKey" placeholder="API key (istersen)" />
+        </label>
+        <label>
+          <span>Cache modu</span>
+          <select id="refreshMode">
+            <option value="auto" selected>Otomatik (cache varsa kullan)</option>
+            <option value="refresh">Yenile (kaynaklardan yeniden çek)</option>
+          </select>
+        </label>
+      </div>
+      <div class="row">
+        <button id="btnClear" class="btn danger">🗑️ Tüm kayıtları sil</button>
+      </div>
+      <p class="small">Kamera ve PWA için HTTPS/secure origin gerekir.</p>
+    </div>
+    <div class="footerSpace"></div>
+  </section>
+</main>
+
+<!-- ADD SHEET -->
+<div id="addSheet" class="sheetBackdrop" hidden>
+  <div class="sheet">
+    <div class="sheetHeader">
+      <div>
+        <div class="sheetTitle">Detaylı Bilgiler</div>
+        <div class="small">Normalde kapalı • + ile açılır</div>
+      </div>
+      <button id="btnCloseAdd" class="btn danger">Kapat</button>
+    </div>
+    <div class="sheetBody">
+      <div class="grid2">
+        <label><span>ISBN-13</span><input id="ed_isbn13" readonly /></label>
+        <label><span>ISBN-10</span><input id="ed_isbn10" readonly /></label>
+        <label><span>Alt Başlık</span><input id="ed_subtitle" /></label>
+        <label><span>Sayfa Sayısı</span><input id="ed_pageCount" inputmode="numeric" /></label>
+        <label><span>Baskı</span><input id="ed_editionStatement" placeholder="Örn: 2. Baskı" /></label>
+        <label>
+          <span>Format</span>
+          <select id="ed_format">
+            <option value="">(Seç)</option>
+            <option>Ciltli</option><option>Ciltsiz</option><option>Deri ciltli</option><option>Defter</option>
+            <option>Kutulu set</option><option>Geleneksel olmayan</option><option>CD</option><option>DVD</option>
+            <option>Ekitap</option><option>Diğer</option>
+          </select>
+        </label>
+        <label><span>Kategoriler</span><input id="ed_categories" placeholder="Virgülle ayır" /></label>
+        <label><span>Raf</span><input id="uc_shelf_detail" list="shelfList" placeholder="Örn: Roman" /></label>
+        <label><span>Satın Alma Tarihi</span><input id="uc_purchaseDate" type="date" /></label>
+        <label><span>Satın Alınan Yer</span><input id="uc_purchasePlace" /></label>
+        <label class="full"><span>Etiketler</span><input id="uc_tags" placeholder="Virgülle ayır" /></label>
+        <label class="full"><span>Açıklama</span><textarea id="ed_description" rows="5"></textarea></label>
+        <label class="full"><span>Notlar</span><textarea id="uc_notes" rows="3"></textarea></label>
+      </div>
+      <div class="row end" style="margin-top:12px">
+        <button id="btnSave" class="btn primary">Kaydet / Güncelle</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- FILTER SHEET -->
+<div id="filterSheet" class="sheetBackdrop" hidden>
+  <div class="sheet">
+    <div class="sheetHeader">
+      <div>
+        <div class="sheetTitle">Filtre & Sıralama</div>
+        <div class="small">Değiştirince anında uygular</div>
+      </div>
+      <button id="btnCloseFilter" class="btn danger">Kapat</button>
+    </div>
+    <div class="sheetBody">
+      <div class="grid2">
+        <label><span>Dil</span><input id="f_language" placeholder="tr/en" /></label>
+        <label><span>Yayıncı</span><input id="f_publisher" /></label>
+        <label><span>Format</span><input id="f_format" placeholder="Ciltli, Ekitap…" /></label>
+        <label><span>Yıl (min)</span><input id="f_yearMin" inputmode="numeric" placeholder="2000" /></label>
+        <label><span>Yıl (max)</span><input id="f_yearMax" inputmode="numeric" placeholder="2026" /></label>
+        <label><span>Fiyat (min)</span><input id="f_priceMin" inputmode="decimal" /></label>
+        <label><span>Fiyat (max)</span><input id="f_priceMax" inputmode="decimal" /></label>
+        <label>
+          <span>Kapak</span>
+          <select id="f_cover">
+            <option value="any" selected>Farketmez</option>
+            <option value="has">Kapak var</option>
+            <option value="none">Kapak yok</option>
+          </select>
+        </label>
+        <label class="full"><span>Etiket içerir</span><input id="f_tag" placeholder="etiket" /></label>
+      </div>
+
+      <hr style="border:0;border-top:1px solid rgba(255,255,255,.08);margin:14px 0" />
+
+      <div class="grid2">
+        <label>
+          <span>Sırala</span>
+          <select id="s_key">
+            <option value="title" selected>Başlık</option>
+            <option value="publishedDate">Yayınlanma Tarihi</option>
+            <option value="publisher">Yayıncı</option>
+            <option value="author">Yazar</option>
+            <option value="price">Fiyat</option>
+          </select>
+        </label>
+        <label>
+          <span>Yön</span>
+          <select id="s_dir">
+            <option value="asc" selected>Artan</option>
+            <option value="desc">Azalan</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="row end" style="margin-top:12px">
+        <button id="btnResetFilter" class="btn">Sıfırla</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SCAN MODAL -->
+<div id="scanModal" class="scanModal" hidden>
+  <div class="scanCard" role="dialog" aria-modal="true" aria-label="Barkod tarayıcı">
+    <div class="scanTop">
+      <div>
+        <div style="font-weight:900">Barkod Oku</div>
+        <div class="small" id="scanHint">Kamerayı barkoda yaklaştır.</div>
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <button id="btnTorch" class="btn ghost" hidden>🔦 Işık</button>
+        <button id="btnCloseScan" class="btn danger">Kapat</button>
+      </div>
+    </div>
+    <video id="scanVideo" playsinline muted></video>
+    <div class="small" id="scanResult"></div>
+  </div>
+</div>
+
+<!-- BOTTOM NAV -->
+<nav class="bottomNav">
+  <div class="bar">
+    <button class="navBtn active" id="navHome" title="Ana">
+      <svg viewBox="0 0 24 24"><path d="M12 3 3 10v11h6v-7h6v7h6V10z"/></svg>
+      Ana
+    </button>
+    <button class="navBtn" id="navShelves" title="Raflar">
+      <svg viewBox="0 0 24 24"><path d="M4 5h16v4H4V5zm0 6h16v4H4v-4zm0 6h16v2H4v-2z"/></svg>
+      Raflar
+    </button>
+    <button class="fab" id="navAdd" title="Detay">
+      <svg viewBox="0 0 24 24"><path d="M11 5h2v14h-2zM5 11h14v2H5z"/></svg>
+    </button>
+    <button class="navBtn" id="navFilter" title="Filtre">
+      <svg viewBox="0 0 24 24"><path d="M3 5h18l-7 8v6l-4 2v-8z"/></svg>
+      Filtre
+    </button>
+    <button class="navBtn" id="navSettings" title="Ayarlar">
+      <svg viewBox="0 0 24 24"><path d="M19.4 13a7.7 7.7 0 0 0 0-2l2-1.5-2-3.5-2.3.8a7.4 7.4 0 0 0-1.7-1L15 3h-4l-.4 2.8c-.6.3-1.2.6-1.7 1L6.6 6 4.6 9.5 6.6 11a7.7 7.7 0 0 0 0 2l-2 1.5 2 3.5 2.3-.8c.5.4 1.1.7 1.7 1L11 21h4l.4-2.8c.6-.3 1.2-.6 1.7-1l2.3.8 2-3.5zM13 15a3 3 0 1 1 0-6 3 3 0 0 1 0 6z"/></svg>
+      Ayar
+    </button>
+  </div>
+</nav>
+
+<script type="module" src="src/app.js"></script>
+</body>
+</html>
